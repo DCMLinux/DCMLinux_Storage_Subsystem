@@ -1,0 +1,66 @@
+'use strict';
+
+var loopback = require('loopback');
+var boot = require('loopback-boot');
+var sslConfig = require('./ssl-config');
+const http = require('http');
+const https = require('https');
+const { env } = require('process');
+
+var app = module.exports = loopback();
+
+// boot scripts mount components like REST API
+boot(app, __dirname);
+
+app.start = async function(httpOnly) {
+  if (httpOnly === undefined) {
+    httpOnly = process.env.HTTP;
+  }
+  let server = null;
+  if (!httpOnly) {
+    const options = {
+      key: sslConfig.privateKey,
+      cert: sslConfig.certificate,
+    };
+    server = https.createServer(options, app);
+  } else {
+    server = http.createServer(app);
+  }
+  server.listen(app.get('port'), function() {
+    const baseUrl = (httpOnly ? 'http://' : 'https://') + app.get('host') + ':' + app.get('port');
+    app.emit('started', baseUrl);
+    console.log('LoopBack server listening @ %s%s', baseUrl, '/');
+    if (app.get('loopback-component-explorer')) {
+      const explorerPath = app.get('loopback-component-explorer').mountPath;
+      console.log('Browse your REST API at %s%s', baseUrl, explorerPath);
+
+      var user = {
+        username: "dcmlinux",
+        email: "info@dcmlinux.org",
+        emailVerified: true,
+        password: process.env.DCMLINUX_STG_PASSWORD
+      }
+
+      app.models.Auth.create(user, function(err, user) {
+        if(err)
+        {
+          console.log(err);
+          process.exit(1);
+        }
+        else
+        {
+          console.log("DCMLinux user created for Web Service");
+        }
+      });
+
+    }
+  });
+  return server;
+};
+
+// Bootstrap the application, configure models, datasources and middleware.
+// Sub-apps like REST API are mounted via boot scripts.
+// start the server if `$ node server.js`
+if (require.main === module) {
+  app.start();
+}
