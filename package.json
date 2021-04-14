@@ -2,8 +2,13 @@
   "name": "DCMLinux_Storage_Subsystem",
   "version": "1.0.0",
   "main": "server/server.js",
+  "bin": "server/server.js",
   "engines": {
     "node": ">=6"
+  },
+  "pkg": {
+    "scripts": "build/**/*.js",
+    "assets": "**"
   },
   "scripts": {
     "lint": "eslint .",
