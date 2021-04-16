@@ -4,19 +4,27 @@ module.exports = function (StorageSubsytem)
 {
    var app = require('../../server/server');
 
-    StorageSubsytem.getFileSystemsInfo = async function(ctx)
-    {
-        try
-        {
-            const result = await diskinfo();
-            return result;
-        }
-        catch(exception)
-        {
-           console.error(exception);
-           throw exception;
-        }
-    }
+   StorageSubsytem.getFileSystemsInfo = async function(mountPoint, ctx)
+   {
+       try
+       {
+           if(mountPoint)
+           {
+               const result = await diskinfo(mountPoint);
+               return result;
+           }
+           else
+           {
+               const result = await diskinfo();
+               return result;
+           }
+       }
+       catch(exception)
+       {
+          console.error(exception);
+          throw exception;
+       }
+   }
 
     StorageSubsytem.mount = function(device, mountPoint, options, ctx, cb)
     {
@@ -147,6 +155,7 @@ module.exports = function (StorageSubsytem)
     {
         description: 'Get File System(s) Info',
         accepts: [
+        { arg: "mountPoint",  type: "string",  required: false},
         { arg: "ctx",  type: "object",  http: { source:'context' }}
         ],
         returns: {
